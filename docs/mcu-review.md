@@ -34,6 +34,8 @@
 
 运行 `node --test tests/tooling.test.mjs`：当前本地 33 项通过，0 失败，0 跳过。真实测试发现并修正了 `CONFIG_SOC_NRF5340_CPUAPP` 在下划线后的匹配问题，并添加 STM32/NXP 同类宏回归。
 
+首次 GitHub Linux 执行还暴露了快速连续开关 hook 时毫秒时间戳备份文件重名；已改用唯一随机标识，并在固定时钟条件下验证连续开关不会覆盖/冲突。
+
 运行 `node scripts/validate.mjs`：校验 UTF-8、技能 frontmatter/implicit policy、相对链接、全部参考可达性、系列路由、规则定义唯一性。官方 skill-creator quick_validate 另行用于技能结构检查。
 
 协议示例保留前次的严格 MSVC C11 与 AddressSanitizer 验证（每次 65,362 项断言，含各 10,000 次往返/随机输入）。本次 CI 额外配置 GCC/Clang 的严格构建与 ASan/UBSan，CI 是否已运行以 GitHub run 为准，不把工作流配置当通过结果。

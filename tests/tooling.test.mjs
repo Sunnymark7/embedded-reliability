@@ -197,6 +197,9 @@ test('hook merge is idempotent and keeps foreign handlers in shared groups', () 
 });
 
 test('hook admin project round trip backs up changes without touching trust', t => {
+  // Fast Linux runs can toggle twice in one millisecond; backup names must
+  // remain unique even if the wall clock has not advanced.
+  t.mock.method(Date, 'now', () => 1793947892868);
   const root = fixture(t);
   const foreign = { hooks: { Stop: [{ hooks: [{ type: 'command', command: 'echo existing' }] }] } };
   const manifest = put(root, '.codex/hooks.json', JSON.stringify(foreign));
@@ -205,7 +208,9 @@ test('hook admin project round trip backs up changes without touching trust', t 
   assert(fs.existsSync(first.backup));
   assert.equal(manageHooks({ action: 'on', root }).changed, false);
   assert.deepEqual(manageHooks({ action: 'status', root }).registered.sort(), ['PostToolUse', 'UserPromptSubmit']);
-  manageHooks({ action: 'off', root });
+  const disabled = manageHooks({ action: 'off', root });
+  assert.notEqual(first.backup, disabled.backup);
+  assert(fs.existsSync(disabled.backup));
   assert.deepEqual(JSON.parse(fs.readFileSync(manifest, 'utf8')), foreign);
   assert.deepEqual(fs.readdirSync(path.join(root, '.codex')).filter(name => /trust|config\.toml/.test(name)), []);
 });

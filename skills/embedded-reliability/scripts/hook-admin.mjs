@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { parseArgs, printError, skillRoot } from './lib/project.mjs';
 
 const owner = 'embedded-reliability:';
@@ -56,7 +57,7 @@ export function manageHooks({ action, root = process.cwd(), user = false }) {
   fs.mkdirSync(base, { recursive: true });
   let backup = null;
   if (fs.existsSync(manifestPath)) {
-    backup = `${manifestPath}.embedded-backup-${Date.now()}-${process.pid}`;
+    backup = `${manifestPath}.embedded-backup-${randomUUID()}`;
     fs.copyFileSync(manifestPath, backup, fs.constants.COPYFILE_EXCL);
   }
   const temporary = `${manifestPath}.embedded-${process.pid}.tmp`;
