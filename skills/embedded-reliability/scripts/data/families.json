@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {"id":"stm32","pattern":"\\bSTM32(?:F[01347]|G[04]|L[0145]|U[035]|H[57])[A-Z0-9_]*\\b","reference":"references/mcu/stm32.md"},
+    {"id":"espressif","pattern":"\\bESP32(?:[-_]?(?:S[23]|C(?:61|[2356])|H2|P4))?(?:[-_][A-Z0-9]+)*\\b","reference":"references/mcu/espressif.md"},
+    {"id":"nxp","pattern":"\\b(?:MIMXRT[A-Z0-9_]*|IMXRT[A-Z0-9_]*|LPC55[A-Z0-9_]*|MCX[A-Z][A-Z0-9_]*|MK(?:L|V|E|[0-9])[A-Z0-9_]+)\\b","reference":"references/mcu/nxp.md"},
+    {"id":"nordic","pattern":"\\bNRF(?:52|53|54)[A-Z0-9_]*\\b","reference":"references/mcu/nordic.md"},
+    {"id":"raspberry-pi","pattern":"\\bRP(?:2040|2350)[A-Z0-9_]*\\b","reference":"references/mcu/raspberry-pi.md"},
+    {"id":"ti","pattern":"\\b(?:MSP430[A-Z0-9_]*|MSPM0[A-Z0-9_]*|TMS320F28[A-Z0-9_]*|F28[0-9][A-Z0-9_]*|C28X|C2000)\\b","reference":"references/mcu/ti.md"},
+    {"id":"microchip","pattern":"\\b(?:ATMEGA[A-Z0-9_]*|ATTINY[A-Z0-9_]*|AVR[0-9][A-Z0-9_]*|PIC(?:1[268]|24|32)[A-Z0-9_]*|DSPIC[A-Z0-9_]*|ATSAM[A-Z0-9_]*|SAM[DE][0-9][A-Z0-9_]*)\\b","reference":"references/mcu/microchip.md"},
+    {"id":"gd32-ch32","pattern":"\\b(?:GD32[A-Z0-9_]+|CH32[A-Z0-9_]+)\\b","reference":"references/mcu/other-families.md"},
+    {"id":"renesas","pattern":"\\b(?:BSP_MCU_GROUP_RA[A-Z0-9_]*|R7FA[A-Z0-9_]+|R5F[A-Z0-9_]+|RX[267][0-9][A-Z0-9_]*|RA[2468][A-Z][0-9][A-Z0-9_]*)\\b","reference":"references/mcu/other-families.md"}
+  ]
+}

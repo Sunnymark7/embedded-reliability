@@ -1,0 +1,6 @@
+interface:
+  display_name: "嵌入式可靠开发"
+  short_description: "按 MCU 型号与项目证据约束固件、驱动设计，自动匹配开发任务并检查风险"
+  default_prompt: "使用 $embedded-reliability，先识别项目平台与运行上下文，再完成本次嵌入式开发或审阅，并报告实际验证证据。"
+policy:
+  allow_implicit_invocation: true

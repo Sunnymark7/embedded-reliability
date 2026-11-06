@@ -1,0 +1,17 @@
+node_modules/
+.codex/
+.agents/
+.validation/
+__pycache__/
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+*.zip
+*.log
+*.tmp
+.env
+.env.*
+!.env.example

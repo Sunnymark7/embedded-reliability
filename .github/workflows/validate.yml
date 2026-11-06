@@ -1,0 +1,34 @@
+name: Validate skill and tooling
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  node:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/validate.mjs
+      - run: node --test tests/tooling.test.mjs
+  c-example:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict C11 build and run
+        run: |
+          ${{ matrix.cc }} -std=c11 -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Werror skills/embedded-reliability/assets/examples/frame_codec.c skills/embedded-reliability/assets/examples/test_frame_codec.c -o /tmp/test_frame_codec
+          /tmp/test_frame_codec
+      - name: Address and undefined behavior sanitizers
+        run: |
+          ${{ matrix.cc }} -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer skills/embedded-reliability/assets/examples/frame_codec.c skills/embedded-reliability/assets/examples/test_frame_codec.c -o /tmp/test_frame_codec_san
+          /tmp/test_frame_codec_san
