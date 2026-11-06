@@ -19,6 +19,8 @@
 
 ## 细节规则
 
+先遵守 [适度设计](proportionate-design.md)：复杂度必须对应实际需求。优先熟悉且直观的表达、模块内显式状态和短调用链；不将同一信息同时保存在多份可变状态中，不为固定流程增加通用配置/回调层。不机械引入函数行数、圈复杂度或注释覆盖率指标作为合格证明。
+
 `STY-01` 必须：一条语句只表达清晰的一次操作，声明即初始化到语义有效状态；不把未 ready 的资源初始化成“成功”。新便携 C 控制语句使用大括号；已有 kernel 代码遵从目标样式，不强改简单分支。
 
 `STY-02` 必须：禁止无意的 switch fallthrough；需要时用目标支持的 fallthrough 标注或明确注释。外部 enum/状态有非法值处理；不能用 default 静默掩盖新增分支，结合 `-Wswitch-enum`/平台等价检查。
@@ -28,6 +30,22 @@
 `STY-04` 必须：宏不重复求值，不隐藏 return/break 或难以发现的副作用；可替换时优先类型明确的 `static inline`。必要多语句宏使用 `do { ... } while (0)`，参数/表达式合理括号。禁用 `MAX(i++, j++)` 这类调用。
 
 `STY-05` 必须：注释说明硬件依据、单位、寿命、锁约束或取舍，不逐行翻译源码。手册引用记录器件/修订/章节；临时 workaround 记录触发条件和移除条件。寄存器魔法值改成有来源的 mask/常量，但不复制一整套无用寄存器封装。
+
+公开 C 接口优先用工程已有的 Doxygen/普通块注释格式；只写与调用者有关的内容：用途、非显然的范围/单位、输入输出和失败时输出、所有权/有效期、允许上下文、是否阻塞。头文件放接口契约，源文件放算法/硬件原因，避免两处复制同一说明。私有明显 helper 不强制加模板；复杂分支/临界区/硬件 workaround 写“为什么”。保留 vendor/kernel 的既有注释风格。
+
+```c
+/**
+ * Read one completed sample; task context only, does not block.
+ * sample must point to caller-owned storage. Unchanged when no sample is ready.
+ * Returns 0 on success, -EAGAIN when the queue is empty.
+ */
+int adc_read_sample(struct adc_reader *reader, struct adc_sample *sample);
+
+/* W1C status: write only the intended mask; read-modify-write could clear
+ * another pending event. See the target reference manual's status register. */
+```
+
+该片段只示范接口契约和硬件原因注释，不是额外 API 框架。真实寄存器注释应引用具体器件/修订/章节，已有源码已明显表达的内容不补长注释。若现有接口用不同错误约定，沿用原工程。`i++ /* increment i */`、`return 0 /* success */` 等复述语法的注释删去；不以作者/日期横幅、冗长历史和未落实的 TODO 替代契约。TODO 必须有具体原因与完成条件或项目 issue，不能编造责任人。
 
 `STY-06` 必须：函数返回约定一致。kernel 通常负 errno；POSIX 常为 `-1 + errno`；自有库可用枚举/状态和输出参数。适配边界显式转换，不能在同一 API 随机混用。检查所有有意义的错误返回，刻意忽略需说明；断言不是输入验证和可恢复错误处理。
 

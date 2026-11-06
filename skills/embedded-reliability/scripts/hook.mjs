@@ -1,16 +1,9 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { inspectProject, skillRoot } from './lib/project.mjs';
+import { inspectProject, resolveScope, skillRoot } from './lib/project.mjs';
 import { scanFiles } from './detect.mjs';
-
-export function relevantPrompt(prompt) {
-  if (typeof prompt !== 'string') return false;
-  if (/\$embedded-reliability\b/.test(prompt)) return true;
-  const identity = /\b(?:STM32\w*|ESP32[-_\w]*|nRF\d+\w*|RP2040|RP2350|MSP430\w*|MSPM0\w*|C2000|C28x|GD32\w*|CH32\w*|MCU|FreeRTOS|Zephyr|i[.]?MX\s*RT\w*|LPC55\w*|AVR|PIC\d+\w*|dsPIC\w*|SAM[DE]\d+\w*)\b|嵌入式|单片机|固件/i.test(prompt);
-  const task = /固件|驱动|中断|寄存器|移植|烧录|采样|缓存一致|单片机|RTOS|\b(?:DMA|ISR|ADC|DAC|UART|I2C|SPI|CAN|firmware|driver|interrupt|bare[- ]metal|porting)\b/i.test(prompt);
-  const uiOnly = /网页|前端|Web\s*UI|dashboard/i.test(prompt) && !/固件|驱动|中断|寄存器|移植|\b(?:firmware|ISR|DMA)\b/i.test(prompt);
-  return identity && task && !uiOnly;
-}
+import { relevantPrompt } from './lib/identity.mjs';
+export { relevantPrompt } from './lib/identity.mjs';
 
 export function editedPaths(event) {
   let input = event.tool_input;
@@ -36,23 +29,39 @@ export function handleHook(event) {
   const skillFile = path.join(skillRoot, 'SKILL.md');
   if (name === 'UserPromptSubmit') {
     if (!relevantPrompt(event.prompt)) return null;
-    return feedback(name, `Embedded firmware/driver task detected. Use $embedded-reliability at ${skillFile}. Read its workflow and relevant MCU family before hardware-dependent edits. Confirm exact part/revision/SDK and memory/IRQ contracts; preserve user scope and read-only requests. No hardware validation is implied.`);
+    return feedback(name, `Embedded task: use $embedded-reliability at ${skillFile}. Load only task-relevant context and references. Preserve read-only scope; verify hardware facts needed for this change. Use the simplest correct implementation, reuse internal contracts, and ask before adding optional costly protection mechanisms. No hardware validation is implied.`);
   }
   if (name !== 'PostToolUse') return null;
   const paths = editedPaths(event);
   if (!paths.length || typeof event.cwd !== 'string') return null;
-  const context = inspectProject(event.cwd);
-  if (!context.embeddedEvidenceFound) return null;
   const reports = [];
+  const contexts = new Map();
+  const contextGaps = [];
+  let embeddedFiles = 0;
   for (const file of paths.slice(0, 12)) {
-    try { reports.push(scanFiles(event.cwd, [file])); }
+    try {
+      const scope = resolveScope(event.cwd, file, { discover: true });
+      const key = `${scope.root}|${scope.scanScope}`;
+      let context = contexts.get(key);
+      if (!context) {
+        context = inspectProject(event.cwd, file, { discover: true });
+        // Compilation records may choose different targets for adjacent files.
+        if (!context.hasCompilationDatabase) contexts.set(key, context);
+      }
+      if (!context.embeddedEvidenceFound) continue;
+      ++embeddedFiles;
+      contextGaps.push(...context.gaps, ...context.issues.map(item => item.code), ...context.identityConflicts.map(item => item.code));
+      reports.push(scanFiles(context.root, [path.resolve(event.cwd, file)]));
+    }
     catch { reports.push({ findings: [], gaps: ['edited-file-unavailable-or-outside-root'] }); }
   }
-  const findings = reports.flatMap(report => report.findings).slice(0, 16);
-  const gaps = [...new Set([...context.gaps, ...reports.flatMap(report => report.gaps), ...(paths.length > 12 ? ['edit-path-limit'] : [])])];
+  if (embeddedFiles === 0) return null;
+  const allFindings = reports.flatMap(report => report.findings);
+  const findings = allFindings.slice(0, 16);
+  const gaps = [...new Set([...contextGaps, ...reports.flatMap(report => report.gaps), ...(paths.length > 12 ? ['edit-path-limit'] : []), ...(allFindings.length > 16 ? ['feedback-finding-limit'] : [])])];
   if (!findings.length && !gaps.length) return null;
   const summary = findings.map(item => `${item.rule} ${item.file}:${item.line}: ${item.message}`).join('\n');
-  return feedback(name, `Embedded reliability review leads after edit. Read ${skillFile} if not loaded.\n${summary}\n${gaps.length ? `Coverage gaps: ${gaps.join(', ')}. ` : ''}Review relevant evidence and repair confirmed issues within authorization; do not suppress a true defect or treat this lexical pass as compliance/hardware proof. A post-edit hook cannot undo the edit.`);
+  return feedback(name, `Embedded review leads; use ${skillFile} if needed.\n${summary}\n${gaps.length ? `Coverage gaps: ${gaps.join(', ')}. ` : ''}Verify the local contract before changing code: a review lead does not require redundant guards or a recovery framework. Repair confirmed defects within scope. Lexical feedback is not semantic/hardware proof and cannot undo edits.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

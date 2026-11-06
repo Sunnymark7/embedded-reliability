@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/validate.mjs
-      - run: node --test tests/tooling.test.mjs
+      - run: node --test tests/tooling.test.mjs tests/discovery.test.mjs
   c-example:
     runs-on: ubuntu-latest
     strategy:

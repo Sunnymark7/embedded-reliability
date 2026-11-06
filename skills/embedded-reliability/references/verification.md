@@ -16,6 +16,10 @@
 
 `VER-02` 必须：告警处理定位根因，不用全局 `-w`、大量强转或通配 suppress。存量问题可建立经解释的基线，本次改动不新增相关高风险项。MISRA 分析报告必须标明版本、工具覆盖、人工检查和偏离，不能把某个开源扫描器结果写成“完整符合”。
 
+现有工具能用就复用，不为普通小修自动安装分析器或升级构建。`detect` 抓不到一般 UAF/竞态；需要语义检查且工程已有 Clang 工具与编译数据库时，可用 `clang-tidy -p <build-dir> <changed-file>` 或项目已有的 Clang Static Analyzer/scan-build 流程。目标 sysroot、定义和编译参数必须与工程匹配，kernel 仍使用本身工具链规则。工具不存在则报告该检查未执行，必要时提出引入成本，由用户决定。[Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/)、[Clang Static Analyzer](https://clang.llvm.org/docs/ClangStaticAnalyzer.html)
+
+技能行为评测应使用真实任务及验收结果，检查是否只加载相关参考、遵守只读、保留内部契约、避免多余保护、正确标注硬件未知。脚本 fixture 不能替代模型端到端评测；外部模型运行/目标板操作的费用与副作用单独受任务授权约束。
+
 ## 行为与边界
 
 `VER-03` 必须：功能涉及内存、解析或生命周期时，验证可观察的不变量，不只匹配代码写法。

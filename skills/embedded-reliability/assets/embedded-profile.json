@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "components": [
+    {
+      "path": ".",
+      "profile": "mcu-rtos",
+      "part": null,
+      "siliconRevision": null,
+      "sdk": null,
+      "toolchain": null,
+      "abi": null
+    }
+  ]
+}

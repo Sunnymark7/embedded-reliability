@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateProfile } from '../skills/embedded-reliability/scripts/lib/profile.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skill = path.join(root, 'skills/embedded-reliability');
@@ -29,6 +30,7 @@ assert(/^description: .+/m.test(frontmatter));
 const metadata = texts.get(path.join(skill, 'agents/openai.yaml'));
 assert(/policy:\s*\n\s+allow_implicit_invocation: true/.test(metadata));
 assert(metadata.includes('$embedded-reliability'));
+validateProfile(JSON.parse(texts.get(path.join(skill, 'assets/embedded-profile.json'))));
 
 let localLinks = 0;
 const urls = new Set();

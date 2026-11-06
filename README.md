@@ -2,6 +2,10 @@
 
 面向 Codex 的中文优先嵌入式开发技能。根据工程证据识别 MCU/运行上下文，约束架构、驱动、内存、指针、并发、DMA、模拟采集、数字通信和代码书写。支持 Linux 内核、Linux 用户态、MCU 裸机/RTOS 与便携 C/C++ 的分开处理。
 
+**默认写简单、清晰、符合现有嵌入式规范的代码。** 必要检查放在真实边界，内部已保证的契约不重复校验；注释说明用途、单位、所有权、上下文和设计原因。没有当前需求时，不增加通用 HAL、锁、重试、引用计数或恢复状态机。额外保护有明显成本时先给具体方案和取舍，由用户决定，主体工作继续。
+
+2.1 版修复了注释误识别、子目录启动漏父级证据、同系列不同型号合并、混合工程 hook 范围问题；共用型号词典，加入按目标文件读取编译定义及可选 JSON 组件声明。设计取舍见 [适度设计](skills/embedded-reliability/references/proportionate-design.md)。
+
 技能入口：[SKILL.md](skills/embedded-reliability/SKILL.md)。规范检索与来源：[来源综合](skills/embedded-reliability/references/standards-and-sources.md)。
 
 ## 安装到 Codex
@@ -27,6 +31,10 @@
 ```
 
 选中技能后执行：只读发现工程 → 确认型号/SDK/ABI/上下文 → 加载系列与领域参考 → 编辑前底线 → 实现或只读审阅 → 检测线索与实际构建/测试 → 报告未验证硬件项。
+
+这个流程按任务裁剪：命名/注释/等价整理复用已知上下文，不强制硬件问卷或新增测试；同一批行为编辑只加载一次底线，目标或约束变化才重读。缺失与本次无关的硬件事实不阻塞纯逻辑工作。
+
+可选配置统一为 [embedded-profile.json](skills/embedded-reliability/assets/embedded-profile.json)，按路径声明 MCU、Linux 或便携组件；不需要同时维护 YAML。配置会校验并与构建线索对照，详细格式和证据等级见 [自动化说明](skills/embedded-reliability/references/automation.md)。
 
 ## 命令式使用
 
@@ -75,20 +83,22 @@ node "<skill-dir>/scripts/hook-admin.mjs" off
 
 - UserPromptSubmit：只对匹配的嵌入式任务提醒加载技能。
 - PostToolUse：对直接 Edit/Write/apply_patch 的 C/C++ 文件输出定位风险线索。
-- Bash/MCP 间接写入、未知工具事件和跨根目标不保证自动扫描。未确认 hook 生效时结束前手动运行 `detect`；项目构建/静态分析/实板验收仍需完成。
+- Bash/MCP 间接写入、未知工具事件和跨根目标不保证自动扫描。行为变更未确认 hook 生效时手动运行 `detect`；纯注释/格式不强制。只运行与当前改动相关的工程验收。
 
 详见 [自动化与约束](skills/embedded-reliability/references/automation.md)。Hook 为反馈，不是全能防火墙或内存/并发证明。
 
 ## 本地验证
 
 ```sh
-node --test tests/*.test.mjs
+node --test tests/tooling.test.mjs tests/discovery.test.mjs
 node scripts/validate.mjs
 cc -std=c11 -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Werror skills/embedded-reliability/assets/examples/frame_codec.c skills/embedded-reliability/assets/examples/test_frame_codec.c -o /tmp/test_frame_codec
 /tmp/test_frame_codec
 ```
 
 CI 使用 Ubuntu/Windows 测试 Node 脚本，GCC/Clang 编译 C11 例子，并单独运行 ASan/UBSan。测试与覆盖边界见 [审查报告](docs/mcu-review.md)。
+
+47 项脚本测试覆盖配置/目标证据、组件隔离、触发和边界；它们不等于真实模型行为评测。可用于后续模型端验收的任务与判据见 [行为评测场景](docs/behavior-evaluation.md)，不会自动调用收费模型或操作板卡。
 
 C11 协议示例只用于 `CHAR_BIT == 8` 且提供精确宽度整数类型的目标；不适用于 C28x 的直接复用。没有烧录/实板、完整 MISRA 工具链或形式验证时，不宣称这些检查已完成。
 
